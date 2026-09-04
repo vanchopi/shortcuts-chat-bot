@@ -13,7 +13,53 @@ datasource db {
 }
 
 model Consultation {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                String             @id @default(cuid())
+  status            ConsultationStatus @default(COLLECTING_INFO)
+  currentStep       ConsultationStep   @default(WAITING_REFERENCE)
+  referenceImages   String[]           @default([])
+  currentHairImages String[]           @default([])
+  hairHistory       String?
+  masterResponse    String?
+  messages          Message[]
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+}
+
+enum ConsultationStatus {
+  COLLECTING_INFO
+  WAITING_FOR_MASTER
+  ANSWERED
+  CLOSED
+}
+
+enum ConsultationStep {
+  WAITING_REFERENCE
+  WAITING_CURRENT_PHOTO
+  WAITING_HAIR_HISTORY
+  WAITING_FOR_MASTER
+  COMPLETED
+}
+
+model Message {
+  id             String        @id @default(cuid())
+  consultationId String
+  consultation   Consultation  @relation(fields: [consultationId], references: [id], onDelete: Cascade)
+  sender         MessageSender
+  type           MessageType
+  text           String?
+  attachmentUrl  String?
+  createdAt      DateTime      @default(now())
+
+  @@index([consultationId, createdAt])
+}
+
+enum MessageSender {
+  CLIENT
+  BOT
+  MASTER
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
 }
