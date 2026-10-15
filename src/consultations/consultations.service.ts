@@ -155,7 +155,6 @@ export class ConsultationsService {
     },
     reply: string,
   ) {
-
     await this.messagesService.createBotMessage(
       consultation.id,
       reply,
