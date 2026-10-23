@@ -14,15 +14,22 @@ datasource db {
 
 model Consultation {
   id                String             @id @default(cuid())
+  conversationId    String?
+  conversation      Conversation?      @relation(fields: [conversationId], references: [id], onDelete: SetNull)
   status            ConsultationStatus @default(COLLECTING_INFO)
   currentStep       ConsultationStep   @default(WAITING_REFERENCE)
   referenceImages   String[]           @default([])
   currentHairImages String[]           @default([])
   hairHistory       String?
   masterResponse    String?
+  telegramChatId    String?
+  telegramMessageId Int?
   messages          Message[]
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
+
+  @@unique([telegramChatId, telegramMessageId])
+  @@index([conversationId])
 }
 
 enum ConsultationStatus {
@@ -62,4 +69,25 @@ enum MessageSender {
 enum MessageType {
   TEXT
   IMAGE
+}
+
+model Customer {
+  id             String         @id @default(cuid())
+  externalUserId String         @unique
+  username       String?
+  conversations  Conversation[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+}
+
+model Conversation {
+  id                     String         @id @default(cuid())
+  externalConversationId String         @unique
+  customerId             String
+  customer               Customer       @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  consultations          Consultation[]
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
+
+  @@index([customerId])
 }

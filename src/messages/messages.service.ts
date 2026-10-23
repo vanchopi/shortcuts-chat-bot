@@ -1,23 +1,27 @@
+
 import { Injectable } from '@nestjs/common';
 import {
   MessageSender,
   MessageType,
 } from '../generated/prisma/client.js';
-import { PrismaService } from '../prisma/prisma.service.js';
 import {
   IncomingMessageType,
   ProcessMessageDto,
 } from '../consultations/dto/process-message.dto.js';
+import { PrismaService } from '../prisma/prisma.service.js';
+
+type MessageDatabase = Pick<PrismaService, 'message'>;
 
 @Injectable()
 export class MessagesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   createClientMessage(
     consultationId: string,
     message: ProcessMessageDto,
+    database: MessageDatabase = this.prisma,
   ) {
-    return this.prisma.message.create({
+    return database.message.create({
       data: {
         consultationId,
         sender: MessageSender.CLIENT,
@@ -31,11 +35,30 @@ export class MessagesService {
     });
   }
 
-  createBotMessage(consultationId: string, text: string) {
-    return this.prisma.message.create({
+  createBotMessage(
+    consultationId: string,
+    text: string,
+    database: MessageDatabase = this.prisma,
+  ) {
+    return database.message.create({
       data: {
         consultationId,
         sender: MessageSender.BOT,
+        type: MessageType.TEXT,
+        text,
+      },
+    });
+  }
+
+  createMasterMessage(
+    consultationId: string,
+    text: string,
+    database: MessageDatabase = this.prisma,
+  ) {
+    return database.message.create({
+      data: {
+        consultationId,
+        sender: MessageSender.MASTER,
         type: MessageType.TEXT,
         text,
       },
@@ -51,5 +74,5 @@ export class MessagesService {
         createdAt: 'asc',
       },
     });
-  }
+  }  
 }

@@ -1,3 +1,5 @@
+import { MasterResponseDto } from './dto/master-response.dto.js';
+import { CreateConsultationDto } from './dto/create-consultation.dto.js';
 import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { ProcessMessageDto } from './dto/process-message.dto.js';
 import { ConsultationsService } from './consultations.service.js';
@@ -9,8 +11,8 @@ export class ConsultationsController {
   ) { }
 
   @Post()
-  create() {
-    return this.consultationsService.create();
+  create(@Body() dto: CreateConsultationDto) {
+    return this.consultationsService.create(dto);
   }
 
   @Post(':id/messages')
@@ -29,5 +31,16 @@ export class ConsultationsController {
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.consultationsService.findOne(id);
+  }
+
+  @Post(':id/master-response')
+  processMasterResponse(
+    @Param('id') id: string,
+    @Body() dto: MasterResponseDto,
+  ) {
+    return this.consultationsService.processMasterResponse(
+      id,
+      dto,
+    );
   }
 }

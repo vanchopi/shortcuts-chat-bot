@@ -121,3 +121,15 @@ Docker Desktop:
 - docker compose up -d
 - npm run start:dev
 - при необходимости npx prisma studio
+
+## Создать новую консультацию
+
+```
+curl -X POST http://localhost:8083/consultations \
+  -H "Content-Type: application/json" \
+  -d '{
+    "externalUserId": "instagram-user-telegram-test",
+    "externalConversationId": "instagram-conversation-telegram-test",
+    "username": "test_client"
+  }'
+  ```
