@@ -91,3 +91,9 @@ model Conversation {
 
   @@index([customerId])
 }
+
+model TelegramWebhookUpdate {
+  updateId    Int       @id
+  processedAt DateTime?
+  createdAt   DateTime  @default(now())
+}

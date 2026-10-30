@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ConsultationsService } from '../../consultations/consultations.service.js';
+import { WebhooksService } from '../webhooks.service.js';
 
 interface TelegramUpdate {
   update_id: number;
@@ -28,6 +29,7 @@ export class TelegramWebhookController {
 
   constructor(
     private readonly consultationsService: ConsultationsService,
+    private readonly webhooksService: WebhooksService,
     configService: ConfigService,
   ) {
     this.webhookSecret =
@@ -48,25 +50,39 @@ export class TelegramWebhookController {
       );
     }
 
-    const message = update.message;
-    const replyToMessageId =
-      message?.reply_to_message?.message_id;
-    const text = message?.text;
-
-    if (!message || !replyToMessageId || !text) {
-      return {
-        status: 'ignored',
-      };
-    }
-
-    await this.consultationsService.processTelegramReply(
-      String(message.chat.id),
-      replyToMessageId,
-      text,
+    const claimed = await this.webhooksService.claimTelegramUpdate(
+      update.update_id,
     );
 
-    return {
-      status: 'processed',
-    };
+    if (!claimed) {
+      return { status: 'duplicate' };
+    }
+
+    try {
+
+      const message = update.message;
+      const replyToMessageId =
+        message?.reply_to_message?.message_id;
+      const text = message?.text;
+
+      if (!message || !replyToMessageId || !text) {
+        return {
+          status: 'ignored',
+        };
+      }
+
+      await this.consultationsService.processTelegramReply(
+        String(message.chat.id),
+        replyToMessageId,
+        text,
+      );
+
+      return {
+        status: 'processed',
+      };
+    } catch (error) {
+      await this.webhooksService.releaseTelegramUpdate(update.update_id);
+      throw error;
+    }
   }
 }
